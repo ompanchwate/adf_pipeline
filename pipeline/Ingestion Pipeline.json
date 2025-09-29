@@ -1,0 +1,257 @@
+{
+	"name": "Ingestion Pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "check_if_file_exists",
+				"type": "Validation",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "http_raw_dataset",
+						"type": "DatasetReference"
+					},
+					"timeout": "0.00:05:30",
+					"sleep": 10
+				}
+			},
+			{
+				"name": "Get Metadata",
+				"type": "GetMetadata",
+				"dependsOn": [
+					{
+						"activity": "check_if_file_exists",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "http_raw_dataset",
+						"type": "DatasetReference"
+					},
+					"fieldList": [
+						"columnCount",
+						"exists",
+						"itemName",
+						"itemType",
+						"lastModified",
+						"size",
+						"structure"
+					],
+					"storeSettings": {
+						"type": "AzureBlobFSReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "DelimitedTextReadSettings"
+					}
+				}
+			},
+			{
+				"name": "if_all_good",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Get Metadata",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(activity('Get Metadata').output.columnCount, 10 )\n",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "source_incorrect",
+							"type": "Fail",
+							"dependsOn": [
+								{
+									"activity": "send_copy_fail_msg",
+									"dependencyConditions": [
+										"Completed"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"message": "Source is not correct",
+								"errorCode": "400"
+							}
+						},
+						{
+							"name": "send_copy_fail_msg",
+							"type": "WebActivity",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"method": "POST",
+								"url": "https://prod-88.eastus.logic.azure.com:443/workflows/8b821113e3634182bf3f29544a569edb/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=PyRaHMRy6A0jsQwboJQ5nMj2uBMJGMwb99bWA-MEv2o",
+								"body": {
+									"value": "@json(concat('{',\n  '\"subject\":\"ADF Pipeline Failed!\",',\n  '\"body\":\"Pipeline: ', pipeline().Pipeline, '<br>',\n  'Column Count: Expected 30 but got ', string(activity('Get Metadata').output.columnCount), '\"',\n'}'))\n",
+									"type": "Expression"
+								}
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "Http_To_Bronze",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.07:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings"
+									}
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "http_raw_dataset",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "bronze_raw",
+									"type": "DatasetReference"
+								}
+							]
+						},
+						{
+							"name": "send_copy_success_msg",
+							"type": "WebActivity",
+							"dependsOn": [
+								{
+									"activity": "Http_To_Bronze",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"method": "POST",
+								"url": "https://prod-88.eastus.logic.azure.com:443/workflows/8b821113e3634182bf3f29544a569edb/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=PyRaHMRy6A0jsQwboJQ5nMj2uBMJGMwb99bWA-MEv2o",
+								"body": {
+									"value": "@json(concat(\n  '{',\n    '\"subject\":\"ADF Pipeline Execution Completed Successfully\",',\n    '\"body\":\"',\n      'The ADF pipeline execution has completed successfully with the following details:<br>',\n      'Pipeline Name: ', pipeline().Pipeline, '<br>',\n      'Copy Activity: ', activity('Http_To_Bronze').ActivityType, '<br>',\n      'Status: ', activity('Http_To_Bronze').Status, '<br>',\n      'Source File Name: ', activity('Get Metadata').output.itemName, '<br>',\n      'Destination: Bronze Data Lake<br>',\n      'Column Count: ', string(activity('Get Metadata').output.columnCount), '<br>',\n      'File Size (Bytes): ', string(activity('Get Metadata').output.size), '<br>',\n      'Data Read (Bytes): ', string(activity('Http_To_Bronze').output.dataRead), '<br>',\n      'Data Written (Bytes): ', string(activity('Http_To_Bronze').output.dataWritten),\n    '\"',\n  '}'\n))\n",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "source_not_present",
+				"type": "Fail",
+				"dependsOn": [
+					{
+						"activity": "check_if_file_exists",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"message": "Source not present",
+					"errorCode": "400"
+				}
+			},
+			{
+				"name": "send_source_not_found_msg",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "check_if_file_exists",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"url": "https://prod-88.eastus.logic.azure.com:443/workflows/8b821113e3634182bf3f29544a569edb/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=PyRaHMRy6A0jsQwboJQ5nMj2uBMJGMwb99bWA-MEv2o",
+					"body": {
+						"value": "@json(concat('{',\n  '\"subject\":\"ADF Pipeline Failed! <br>\",',\n  '\"body\":\"Pipeline: ', pipeline().Pipeline, ' Failed as Source is not present\"',\n'}'))\n",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"annotations": []
+	}
+}
