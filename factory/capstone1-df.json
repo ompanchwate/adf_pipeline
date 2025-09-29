@@ -1,0 +1,9 @@
+{
+	"name": "capstone1-df",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "c5727e35-8bc6-463d-949d-6b077c87ebdd",
+		"tenantId": "c853abc0-64a4-447b-99f7-564ea0b8e378"
+	}
+}
