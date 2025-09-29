@@ -1,0 +1,21 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "capstone1-df"
+		},
+		"bronze_datalake_accountKey": {
+			"value": ""
+		},
+		"DataBricks_properties_typeProperties_existingClusterId": {
+			"value": "0929-094342-hy0yzpq2"
+		},
+		"KeyVault_properties_typeProperties_baseUrl": {
+			"value": "https://capstone1-keyvault.vault.azure.net/"
+		},
+		"bronze_datalake_properties_typeProperties_url": {
+			"value": "https://capstone1bronzelake.dfs.core.windows.net/"
+		}
+	}
+}

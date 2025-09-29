@@ -1,0 +1,70 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "capstone1-df"
+		},
+		"bronze_datalake_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'bronze_datalake'"
+		},
+		"DataBricks_properties_typeProperties_existingClusterId": {
+			"type": "string",
+			"defaultValue": "0929-094342-hy0yzpq2"
+		},
+		"KeyVault_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://capstone1-keyvault.vault.azure.net/"
+		},
+		"bronze_datalake_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://capstone1bronzelake.dfs.core.windows.net/"
+		},
+		"containerUri": {
+			"type": "string",
+			"metadata": "URI to storage account containing linked ARM templates"
+		},
+		"containerSasToken": {
+			"type": "string",
+			"metadata": "Sas token to storage account containing linked ARM templates"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "capstone1-df_ArmTemplate_0",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"bronze_datalake_accountKey": {
+						"value": "[parameters('bronze_datalake_accountKey')]"
+					},
+					"KeyVault_properties_typeProperties_baseUrl": {
+						"value": "[parameters('KeyVault_properties_typeProperties_baseUrl')]"
+					},
+					"bronze_datalake_properties_typeProperties_url": {
+						"value": "[parameters('bronze_datalake_properties_typeProperties_url')]"
+					},
+					"DataBricks_properties_typeProperties_existingClusterId": {
+						"value": "[parameters('DataBricks_properties_typeProperties_existingClusterId')]"
+					}
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}
