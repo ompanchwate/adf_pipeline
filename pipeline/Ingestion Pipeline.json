@@ -118,7 +118,7 @@
 					],
 					"ifTrueActivities": [
 						{
-							"name": "Http_To_Bronze",
+							"name": "Source_To_Bronze",
 							"type": "Copy",
 							"dependsOn": [],
 							"policy": {
@@ -180,7 +180,7 @@
 							"type": "WebActivity",
 							"dependsOn": [
 								{
-									"activity": "Http_To_Bronze",
+									"activity": "Source_To_Bronze",
 									"dependencyConditions": [
 										"Succeeded"
 									]
