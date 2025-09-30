@@ -9,7 +9,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataset": {
-						"referenceName": "http_raw_dataset",
+						"referenceName": "source_raw_dataset",
 						"type": "DatasetReference"
 					},
 					"timeout": "0.00:05:30",
@@ -37,7 +37,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataset": {
-						"referenceName": "http_raw_dataset",
+						"referenceName": "source_raw_dataset",
 						"type": "DatasetReference"
 					},
 					"fieldList": [
@@ -164,7 +164,7 @@
 							},
 							"inputs": [
 								{
-									"referenceName": "http_raw_dataset",
+									"referenceName": "source_raw_dataset",
 									"type": "DatasetReference"
 								}
 							],
