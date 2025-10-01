@@ -1,0 +1,25 @@
+{
+	"name": "ingestion_trigger",
+	"properties": {
+		"description": "when new file is added",
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "Ingestion Pipeline",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "BlobEventsTrigger",
+		"typeProperties": {
+			"blobPathBeginsWith": "/source/blobs/",
+			"ignoreEmptyBlobs": true,
+			"scope": "/subscriptions/9ecede26-932c-46a9-89d6-cf3ca23c4a58/resourceGroups/capstone1-rg/providers/Microsoft.Storage/storageAccounts/capstone1bronzelake",
+			"events": [
+				"Microsoft.Storage.BlobCreated"
+			]
+		}
+	}
+}
