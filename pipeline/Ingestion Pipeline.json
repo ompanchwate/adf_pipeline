@@ -79,7 +79,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"expression": {
-						"value": "@and(\n  greater(activity('Get Metadata').output.columnCount, 10),\n  greater(activity('Get Metadata_copy1').output.columnCount, 10)\n)\n",
+						"value": "@and(\n  greater(activity('Get Metadata').output.columnCount, 10),\n  greater(activity('Get Metadata_copy1').output.size, 2000)\n)\n",
 						"type": "Expression"
 					},
 					"ifFalseActivities": [
@@ -170,7 +170,7 @@
 							},
 							"inputs": [
 								{
-									"referenceName": "source_raw_dataset",
+									"referenceName": "source_csv_dataset",
 									"type": "DatasetReference"
 								}
 							],
@@ -350,13 +350,11 @@
 						"type": "DatasetReference"
 					},
 					"fieldList": [
-						"columnCount",
 						"exists",
 						"itemName",
 						"itemType",
 						"lastModified",
-						"size",
-						"structure"
+						"size"
 					],
 					"storeSettings": {
 						"type": "AzureBlobFSReadSettings",
@@ -365,6 +363,34 @@
 					},
 					"formatSettings": {
 						"type": "JsonReadSettings"
+					}
+				}
+			},
+			{
+				"name": "send_source_not_found_msg_copy1",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "check_if_json_exists",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"url": "https://prod-88.eastus.logic.azure.com:443/workflows/8b821113e3634182bf3f29544a569edb/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=PyRaHMRy6A0jsQwboJQ5nMj2uBMJGMwb99bWA-MEv2o",
+					"body": {
+						"value": "@json(concat('{',\n  '\"subject\":\"ADF Pipeline Failed! <br>\",',\n  '\"body\":\"Pipeline: ', pipeline().Pipeline, ' Failed as Source is not present\"',\n'}'))\n",
+						"type": "Expression"
 					}
 				}
 			}
